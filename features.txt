@@ -11,11 +11,24 @@ Registered User:
 5. User will need to insert PIN number everytime when doing a transaction (transfering money to others)
 6. User can view own transaction history (transferred and received)
 7. User can check own balance
-8. User can own's details (email, phone number)
+8. User can check own's details (email, phone number)
+
 9. User can reset PIN number, but user must first insert the correct PIN number 
-   {future enhancement: adding email OTP or phone OTP for restting PIN Number}
+   {future enhancement: adding email OTP or phone OTP for restting PIN Number} (Under phase 2)
 
 
 Admin:
 1. Admin will have the same functionalities of User (where admin account is also worked like user but with view all access privillege)
 2. Admin can view all user's transaction history with filter (senderid, receiverid, date)
+
+
+
+encryption_attribute:
+card_number
+card_exipre_month
+card_expire_year
+card_cvv
+
+user's phone number
+user's personal email
+
