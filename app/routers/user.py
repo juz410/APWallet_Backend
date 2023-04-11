@@ -1,8 +1,8 @@
-from .. import models, schemas, utils, cas
-from fastapi import FastAPI, HTTPException, Response, status, Depends, APIRouter
+from ..utils import hash_utils
+from .. import models, schemas, cas
+from fastapi import HTTPException, status, Depends, APIRouter
 from ..database import get_db
 from sqlalchemy.orm import Session
-import json
 
 router = APIRouter(
     prefix="/user",
@@ -33,12 +33,10 @@ def register_new_user( user_register: schemas.UserRegister, db: Session = Depend
         "name": cas_user['name'],
         "phone_number": user_register.phone_number,
         "balance": 0,
-        "pin_number": utils.hash(user_register.pin_number),
+        "pin_number": hash_utils.hash(user_register.pin_number),
     }
-    print(user)
 
     db_user = models.User(**user)
-    print(db_user)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

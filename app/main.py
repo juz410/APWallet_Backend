@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 from . import models, cas
 from .database import engine
-from .routers import user, auth
+from .routers import user, auth, card
 import json
 
 
@@ -13,6 +13,7 @@ app = FastAPI()
 
 app.include_router(user.router)
 app.include_router(auth.router)
+app.include_router(card.router)
 
 
 @app.get("/")

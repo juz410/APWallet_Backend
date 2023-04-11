@@ -19,4 +19,18 @@ class User(BaseModel):
 class UserClass(User):
     pin_number: str
 
+
+class CardCreate(BaseModel):
+    card_number : str
+    card_expire_month : str
+    card_expire_year : str
+    card_cvv : str
+
+class CardOut(BaseModel):
+    card_id : int
+    card_number : str
+    registered_at : datetime
+    class Config:
+        orm_mode = True
+
     
