@@ -19,7 +19,7 @@ Registered User:
 
 Admin:
 1. Admin will have the same functionalities of User (where admin account is also worked like user but with view all access privillege)
-2. Admin can view all user's transaction history with filter (senderid, receiverid, date)
+2. Admin can view all user's transaction history with filter (senderid, receiverid)
 
 
 

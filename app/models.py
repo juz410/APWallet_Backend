@@ -1,5 +1,6 @@
 from sqlalchemy import TIMESTAMP, Column, ForeignKey, Integer, String, Numeric, text, LargeBinary
 from .database import Base
+from sqlalchemy.orm import relationship
 
 class User(Base):
     __tablename__ = "users"
@@ -15,11 +16,16 @@ class User(Base):
 class Transaction(Base):
     __tablename__ = "transactions"
     transaction_id = Column(Integer, primary_key=True, autoincrement=True)
-    sender_id = Column(String, ForeignKey('users.user_id'), nullable=False)
-    receiver_id = Column(String, ForeignKey('users.user_id'), nullable=False)
+    sender_id = Column(String, ForeignKey('users.user_id'), nullable=True)
+    receiver_id = Column(String, ForeignKey('users.user_id'), nullable=True)
     amount = Column(Numeric(precision=12, scale=2), nullable=False)
     transaction_method = Column(String, nullable=False)
     registered_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'), nullable=False)
+    card_id = Column(Integer, ForeignKey('cards.card_id'), nullable=True)
+    
+    sender = relationship("User", foreign_keys=[sender_id])
+    receiver = relationship("User", foreign_keys=[receiver_id])
+    card = relationship("Card")
 
 class Card(Base):
     __tablename__ = "cards"
@@ -30,3 +36,5 @@ class Card(Base):
     card_expire_year = Column(String, nullable=False) #to be encrypted
     card_cvv = Column(String, nullable=False) #to be encrypted
     registered_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'), nullable=False)
+
+    user = relationship("User")
