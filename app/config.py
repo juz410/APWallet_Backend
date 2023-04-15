@@ -7,6 +7,11 @@ class Settings(BaseSettings):
     database_password: str
     database_name: str
     secret_key: str
+    email_username: str
+    email_password: str
+    email_from: str
+    email_smtp_server: str
+    email_smtp_port: int
 
     class Config:
         env_file = ".env"

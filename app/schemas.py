@@ -47,6 +47,7 @@ class TransactionBase(BaseModel):
     amount : float
     transaction_method : TransactionMethod
     card_id : Optional[int] = None
+    last_4_card_digits : Optional[str] = None
 
 class TransactionCreate(TransactionBase):
     pin_number: Optional[str] = None
@@ -60,4 +61,7 @@ class TransactionOut(TransactionBase):
     class Config:
         orm_mode = True
 
+class ChangePinRequest(BaseModel):
+    otp: str
+    new_pin: str
     

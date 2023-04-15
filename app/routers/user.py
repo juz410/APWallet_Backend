@@ -27,6 +27,10 @@ def register_new_user( user_register: schemas.UserRegister, db: Session = Depend
     existing_phone_number = db.query(models.User).filter(models.User.phone_number == user_register.phone_number).first()
     if existing_phone_number:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone number already exists")
+    
+    if len(user_register.pin_number) != 6:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Pin number must be 6 digits")
+
     user: schemas.UserClass = {
         "user_id": cas_user_id,
         "email": cas_user['email'],

@@ -28,7 +28,3 @@ card_number
 card_exipre_month
 card_expire_year
 card_cvv
-
-user's phone number
-user's personal email
-
