@@ -23,7 +23,7 @@ class Transaction(Base):
     registered_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'), nullable=False)
     card_id = Column(Integer, ForeignKey('cards.card_id', ondelete='SET NULL'), nullable=True)
     last_4_card_digits = Column(String(4), nullable=True)
-    
+    stripe_receipt_id = Column(String, nullable=True)
     sender = relationship("User", foreign_keys=[sender_id])
     receiver = relationship("User", foreign_keys=[receiver_id])
     card = relationship("Card")

@@ -1,4 +1,4 @@
-from ..utils import hash_utils, crypto_utils, rsa_utils
+from ..utils import hash_utils, crypto_utils, rsa_utils,stripe_utils,email_utils
 from .. import models, schemas, cas
 from fastapi import HTTPException, status, Depends, APIRouter
 from ..database import get_db
@@ -13,8 +13,9 @@ router = APIRouter(
 )
 
 @router.post("/",status_code=status.HTTP_201_CREATED, response_model=schemas.TransactionOut, description="Note: User's PIN Number and Transaction Amount must be encrypted")
-def create_transaction(transaction: schemas.TransactionCreate, db: Session = Depends(get_db), cas_user = Depends(cas.cas_service_ticket_validator)):
+async def create_transaction(transaction: schemas.TransactionCreate, db: Session = Depends(get_db), cas_user = Depends(cas.cas_service_ticket_validator)):
     sender_id = cas_user['user_id']
+    user_email = cas_user['email']
     transaction.amount = Decimal(transaction.amount)
     if transaction.transaction_method in (schemas.TransactionMethod.CARD_TOPUP, schemas.TransactionMethod.ONLINE_BANKING):
         transaction.sender_id = None
@@ -36,6 +37,15 @@ def create_transaction(transaction: schemas.TransactionCreate, db: Session = Dep
         transaction.card_id = card.card_id
         card_number_last_4_digits = crypto_utils.decrypt(card.card_number)[-4:]
         transaction.last_4_card_digits = card_number_last_4_digits
+        stripe_resp = stripe_utils.create_payment_intent(transaction.amount*100, user_email)
+        transaction.stripe_receipt_id = stripe_resp.id
+
+        # await email_utils.send_email(
+        # to=[user_email],
+        # subject="APWallet Payment Receipt",
+        # body=f"Your payment of RM{transaction.amount} has been received.\nPayment Method VISA:{transaction.last_4_card_digits}.\nYour payment receipt id is {stripe_resp.id}"
+        # )
+
 
     if transaction.transaction_method == schemas.TransactionMethod.INSTANT_TRANSFER:
 
@@ -82,6 +92,16 @@ def create_transaction(transaction: schemas.TransactionCreate, db: Session = Dep
     db.add(transaction)
     db.commit()
     db.refresh(transaction)
+
+    if(transaction.transaction_method == schemas.TransactionMethod.CARD_TOPUP or transaction.transaction_method == schemas.TransactionMethod.ONLINE_BANKING):
+        body = f'Your payment of RM{transaction.amount} has been received.\nPayment Method Online Banking.\nYour payment receipt id is {transaction.transaction_id}'
+        if(transaction.transaction_method == schemas.TransactionMethod.CARD_TOPUP):
+            body = f'Your payment of RM{transaction.amount} has been received.\nPayment Method VISA:{transaction.last_4_card_digits}.\nYour payment receipt id is {transaction.transaction_id}'
+        await email_utils.send_email(
+            to=[user_email],
+            subject="APWallet Payment Receipt",
+            body=body
+        )
 
     return transaction
 

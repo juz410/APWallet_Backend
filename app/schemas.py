@@ -57,6 +57,7 @@ class TransactionBase(BaseModel):
     transaction_method : TransactionMethod
     card_id : Optional[int] = None
     last_4_card_digits : Optional[str] = None
+    stripe_receipt_id : Optional[str] = None
 
 class TransactionCreate(TransactionBase):
     pin_number: Optional[str] = None

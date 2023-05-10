@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     email_smtp_port: int
     private_key: str
     public_key: str
+    stripe_api_key: str
     class Config:
         env_file = ".env"
 
