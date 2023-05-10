@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     email_from: str
     email_smtp_server: str
     email_smtp_port: int
-
+    private_key: str
+    public_key: str
     class Config:
         env_file = ".env"
 

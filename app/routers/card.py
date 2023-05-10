@@ -1,4 +1,4 @@
-from ..utils import crypto_utils
+from ..utils import crypto_utils, rsa_utils
 from .. import models, schemas, cas
 from fastapi import HTTPException, status, Depends, APIRouter
 from ..database import get_db
@@ -15,7 +15,7 @@ def get_cards(db: Session = Depends(get_db), cas_user = Depends(cas.cas_service_
     cas_user_id = cas_user['user_id']
     cards = db.query(models.Card).filter(models.Card.user_id == cas_user_id).all()
     if(not cards):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Card not found")
+        return []
 
     for card in cards:
         card.card_number = crypto_utils.decrypt(card.card_number)
@@ -23,10 +23,21 @@ def get_cards(db: Session = Depends(get_db), cas_user = Depends(cas.cas_service_
     return cards
     
 
-@router.post("/", response_model=schemas.CardOut)
+@router.post("/", response_model=schemas.CardOut, description="Note: Card Details must be encrypted")
 def add_card(card: schemas.CardCreate, db: Session = Depends(get_db), cas_user = Depends(cas.cas_service_ticket_validator)):
     
     cas_user_id = cas_user['user_id']
+
+    try:
+        decrypted_secret_key = rsa_utils.decrypt_secret_key(card.aes_key.key)
+        decrypted_iv = rsa_utils.decrypt_secret_key(card.aes_key.iv)
+        card.card_number = rsa_utils.decrypt_aes_encryption(card.card_number, decrypted_secret_key, decrypted_iv)
+        card.card_expire_month = rsa_utils.decrypt_aes_encryption(card.card_expire_month, decrypted_secret_key, decrypted_iv)
+        card.card_expire_year = rsa_utils.decrypt_aes_encryption(card.card_expire_year, decrypted_secret_key, decrypted_iv)
+        card.card_cvv = rsa_utils.decrypt_aes_encryption(card.card_cvv, decrypted_secret_key, decrypted_iv)
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Decryption process Error")
+    
     encrypted_card_number = crypto_utils.encrypt(card.card_number)
     encrypted_card_expire_month = crypto_utils.encrypt(card.card_expire_month)
     encrypted_card_expire_year = crypto_utils.encrypt(card.card_expire_year)
@@ -59,8 +70,6 @@ def delete_card(card_id: int, db: Session = Depends(get_db), cas_user = Depends(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Card not found")
     if(card.user_id != cas_user_id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to delete this card")
-    
-
 
     db.delete(card)
     db.commit()
