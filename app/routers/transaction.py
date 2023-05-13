@@ -107,50 +107,75 @@ async def create_transaction(transaction: schemas.TransactionCreate, db: Session
 
 @router.get("/", response_model=List[schemas.TransactionOut])
 def get_transactions(db: Session = Depends(get_db), cas_user = Depends(cas.cas_service_ticket_validator), 
-                     sender_id: str = None, receiver_id: str = None, transaction_method: str = None):
+                     sender_id: str = '', receiver_id: str = '', transaction_method: str = '', page: int = 0):              
+    limit = 7
+    offset = page * limit
 
     if(cas_user['role'] != "staff"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to view all transactions")
 
-    if sender_id and receiver_id:
+    if(sender_id):
         sender = db.query(models.User).filter(models.User.user_id == sender_id).first()
         if(not sender):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sender not found")
+
+    if(receiver_id):
         receiver = db.query(models.User).filter(models.User.user_id == receiver_id).first()
         if(not receiver):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Receiver not found")
+        
+    if sender_id and receiver_id and transaction_method:
         transactions = db.query(models.Transaction).filter(
             models.Transaction.sender_id == sender_id, 
             models.Transaction.receiver_id == receiver_id,
             models.Transaction.transaction_method == transaction_method).order_by(desc(
-            models.Transaction.registered_at)).all()
+            models.Transaction.registered_at)).limit(limit=limit).offset(offset=offset).all()
+        return transactions
+    
+    if receiver_id and transaction_method:
+        transactions = db.query(models.Transaction).filter(
+            models.Transaction.receiver_id == receiver_id,
+            models.Transaction.transaction_method == transaction_method).order_by(desc(
+            models.Transaction.registered_at)).limit(limit=limit).offset(offset=offset).all()
+        return transactions            
+        
+    if sender_id and transaction_method:
+        transactions = db.query(models.Transaction).filter(
+            models.Transaction.sender_id == sender_id, 
+            models.Transaction.transaction_method == transaction_method).order_by(desc(
+            models.Transaction.registered_at)).limit(limit=limit).offset(offset=offset).all()
+        return transactions
+    
+    if sender_id and receiver_id:
+        transactions = db.query(models.Transaction).filter(
+            models.Transaction.sender_id == sender_id, 
+            models.Transaction.receiver_id == receiver_id).order_by(desc(
+            models.Transaction.registered_at)).limit(limit=limit).offset(offset=offset).all()
+        return transactions
+    
+    if transaction_method:
+        transactions = db.query(models.Transaction).filter(
+            models.Transaction.transaction_method == transaction_method).order_by(desc(
+            models.Transaction.registered_at)).limit(limit=limit).offset(offset=offset).all()
+        return transactions
+    
+    if receiver_id:
+        transactions = db.query(models.Transaction).filter(
+            models.Transaction.receiver_id == receiver_id,).order_by(desc(
+            models.Transaction.registered_at)).limit(limit=limit).offset(offset=offset).all()
         return transactions
     
     if sender_id:
-        sender = db.query(models.User).filter(
-            models.User.user_id == sender_id, models.Transaction.transaction_method == transaction_method).first()
-        if(not sender):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sender not found")
         transactions = db.query(models.Transaction).filter(
-            models.Transaction.sender_id == sender_id).order_by(desc(
-            models.Transaction.registered_at)).all()
-        return transactions
-
-    if receiver_id:
-        receiver = db.query(models.User).filter(
-            models.User.user_id == receiver_id,
-            models.Transaction.transaction_method == transaction_method).first()
-        if(not receiver):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Receiver not found")
-        transactions = db.query(models.Transaction).filter(
-            models.Transaction.receiver_id == receiver_id).order_by(desc(
-            models.Transaction.registered_at)).all()
+            models.Transaction.sender_id == sender_id, ).order_by(desc(
+            models.Transaction.registered_at)).limit(limit=limit).offset(offset=offset).all()
         return transactions
     
 
-    transactions = db.query(models.Transaction).filter(
-                        models.Transaction.transaction_method == transaction_method).order_by(desc(
-                        models.Transaction.registered_at)).all()
+    transactions = db.query(models.Transaction).order_by(desc(
+            models.Transaction.registered_at)).limit(limit=limit).offset(offset=offset).all()
+
+
     return transactions
 
 @router.get("/user", response_model=List[schemas.TransactionOut])
