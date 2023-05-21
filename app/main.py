@@ -1,11 +1,8 @@
-from fastapi import FastAPI, Depends
-from . import models, cas
+from fastapi import FastAPI
+from . import models
 from .database import engine
 from .routers import user, auth, card, transaction, otp, key
-import json
 from fastapi.middleware.cors import CORSMiddleware
-from .utils import crypto_utils, rsa_utils
-import base64
 from pydantic import BaseModel
 
 class EncryptedData(BaseModel):
